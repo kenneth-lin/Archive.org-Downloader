@@ -9,6 +9,7 @@ import os
 import sys
 import shutil
 import json
+from urllib.parse import unquote
 
 def display_error(response, message):
 	print(message)
@@ -214,6 +215,10 @@ if __name__ == "__main__":
 		session = loan(session, book_id)
 		title, links, metadata = get_book_infos(session, url)
 
+		print(unquote(url))
+
+		#print("metadata is" + metadata["title-alt-script"])
+
 		directory = os.path.join(d, title)
 		# Handle the case where multiple books with the same name are downloaded
 		i = 1
@@ -247,7 +252,7 @@ if __name__ == "__main__":
 						raise Exception("unsupported metadata type")
 			# title
 			if 'title' in metadata:
-				pdfmeta['title'] = metadata['title']
+				pdfmeta['title'] = metadata['title']		
 			# author
 			if 'creator' in metadata and 'associated-names' in metadata:
 				pdfmeta['author'] = metadata['creator'] + "; " + metadata['associated-names']
@@ -263,8 +268,12 @@ if __name__ == "__main__":
 					pass
 			# keywords
 			pdfmeta['keywords'] = [f"https://archive.org/details/{book_id}"]
-
+			
 			pdf = img2pdf.convert(images, **pdfmeta)
+			if 'title-alt-script' in metadata:
+				title = metadata['title-alt-script']
+				title = title.replace("\\"," ").replace("/"," ").replace(":"," ").replace("*"," ").replace("?"," ")
+				title = title.replace("\""," ").replace("<"," ").replace(">"," ").replace("|"," ")
 			make_pdf(pdf, title, args.dir if args.dir != None else "")
 			try:
 				shutil.rmtree(directory)
